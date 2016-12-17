@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  remote_user: root
+  vars:
+    pyenv_python_versions:
+      - '2.7.x'
+      - '3.5.x'
+    pyenv_virtualenvs: []
+    pyenv_owner:
+      - tomohiko
+      - test01
+  roles:
+    - kota65535.pyenv

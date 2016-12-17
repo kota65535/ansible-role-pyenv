@@ -1,0 +1,6 @@
+---
+# defaults file for pyenv
+pyenv_path: "{{ ansible_env.HOME }}/.pyenv"
+pyenv_owner: "{{ ansible_env.USER }}"
+pyenv_update_git_install: no
+pyenv_profile_path: "/etc/profile.d/pyenv.sh"

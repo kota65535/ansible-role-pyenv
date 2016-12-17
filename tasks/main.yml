@@ -1,0 +1,86 @@
+---
+- name: Install packages
+  include: packages.yml
+# http://hakunin.com/six-ansible-practices
+- name: Ensure github.com is a known host
+  lineinfile:
+    dest: "~/.ssh/known_hosts"
+    create: yes
+    state: present
+    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
+    regexp: "^github\\.com"
+
+- name: Install pyenv
+  git:
+    repo: https://github.com/yyuu/pyenv.git
+    dest: "{{ pyenv_path }}"
+    update: "{{pyenv_update_git_install}}"
+  become_user: "{{pyenv_owner}}"
+
+- name: Install PyEnv-virtualenv plugin
+  git:
+    repo: https://github.com/yyuu/pyenv-virtualenv.git
+    dest: "{{ pyenv_path }}/plugins/pyenv-virtualenv"
+    update: "{{pyenv_update_git_install}}"
+  become_user: "{{pyenv_owner}}"
+
+- name: Add pyenv initialization to profile system-wide
+  template:
+    src: pyenv.sh.j2
+    dest: "{{ pyenv_profile_path }}"
+    owner: root
+    group: root
+    mode: 0755
+  become: yes
+
+- name: Replace 'x' in the specified python version with the latest one
+  script: get_latest_version.sh {{ item }}
+  with_items: "{{ pyenv_python_versions }}"
+  register: latest_version
+# - debug: var=latest_version
+
+# Workaround for set_fact doesn't work with loops.
+# https://github.com/ansible/ansible/pull/8019
+- set_fact:
+    # not use stdout because it contains \r\n
+    tmp_items: "{{ item.stdout_lines[0] }}"
+  with_items: "{{ latest_version.results }}"
+  register: sf_result
+- set_fact:
+    pyenv_python_versions_mod: "{{ sf_result.results | map(attribute='ansible_facts.tmp_items') | list }}"
+# - debug: var=pyenv_python_versions_mod
+
+- name: Install Python interpreters
+  shell: |
+    . /etc/profile.d/pyenv.sh && pyenv install {{ item }}
+  args:
+    creates: "{{ pyenv_path }}/versions/{{ item }}/bin/python"
+  with_items: "{{pyenv_python_versions_mod | default(omit)}}"
+  become_user: "{{ pyenv_owner }}"
+  when: pyenv_python_versions is defined
+
+- name: Replace 'x' in the specified python version with the latest one
+  script: get_latest_version.sh {{ item.py_version }}
+  with_items: "{{ pyenv_virtualenvs }}"
+  register: latest_version_4_venv
+- debug: var=latest_version_4_venv
+
+- set_fact:
+    tmp_items:
+      - py_version: "{{ item.0.stdout_lines[0] }}"
+        venv_name: "{{ item.1.venv_name }}"
+  with_together:
+    - "{{ latest_version_4_venv.results }}"
+    - "{{ pyenv_virtualenvs }}"
+  register: sf_result
+- set_fact:
+    pyenv_virtualenvs_mod: "{{ sf_result.results | map(attribute='ansible_facts.tmp_items') | list }}"
+- debug: var=pyenv_virtualenvs_mod
+
+- name: Create virtual environments
+  shell: . {{ pyenv_profile_path }} && pyenv virtualenv {{ item.py_version }} {{ item.venv_name }}
+         creates="{{ pyenv_path }}/versions/{{ item.venv_name }}/bin/python"
+  with_items: "{{pyenv_virtualenvs_mod | default(omit)}}"
+  become_user: "{{pyenv_owner}}"
+  when: pyenv_virtualenvs is defined
+
