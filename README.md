@@ -17,7 +17,7 @@ None
 Role Variables
 --------------
 
-Here is the list of all variables and their default values:
+Here is the list of all variables and their default values.  
 You can use 'x' for specifying the latest version.
 
 * `pyenv_path: "{{ ansible_env.HOME }}/.pyenv"`
