@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  remote_user: root
+  become: yes
   vars:
     pyenv_python_versions:
       - '2.7.x'
