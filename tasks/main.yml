@@ -5,12 +5,14 @@
 - name: Check if the users exist
   shell: "getent passwd {{ item }}"
   with_items: "{{ pyenv_users }}"
+  become: yes
 
 - name: Get each user's home directory
   shell: "getent passwd {{ item }} | awk -F: '{ print $6 }'"
   with_items: "{{ pyenv_users }}"
   register: remote_user_homes
   failed_when: remote_user_homes.stdout == ""
+  become: yes
 - name: Set pyenv_users_info
   set_fact:
     pyenv_users_info: "{{ pyenv_users_info|default([]) + [ {'name': item.item, 'pyenv_root': item.stdout + '/.pyenv' } ] }}"

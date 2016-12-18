@@ -27,5 +27,5 @@ script:
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/kota65535.pyenv/test/main.yml --syntax-check -vvvv'
 
   # Test role.
-  - 'docker exec "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/kota65535.pyenv/test/main.yml --sudo -vvvv'
+  - 'docker exec "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/kota65535.pyenv/test/main.yml -i /etc/ansible/roles/kota65535.pyenv/test/inventory" --sudo -vvvv'
 
