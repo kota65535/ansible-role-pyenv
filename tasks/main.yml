@@ -1,6 +1,22 @@
 ---
 - name: Install packages
   include: packages.yml
+
+- name: Check if the users exist
+  shell: "getent passwd {{ item }}"
+  with_items: "{{ pyenv_users }}"
+
+- name: Get each user's home directory
+  shell: "getent passwd {{ item }} | awk -F: '{ print $6 }'"
+  with_items: "{{ pyenv_users }}"
+  register: remote_user_homes
+  failed_when: remote_user_homes.stdout == ""
+- name: Set pyenv_users_info
+  set_fact:
+    pyenv_users_info: "{{ pyenv_users_info|default([]) + [ {'name': item.item, 'pyenv_root': item.stdout + '/.pyenv' } ] }}"
+  with_items: "{{ remote_user_homes.results }}"
+- debug: var=pyenv_users_info
+
 # http://hakunin.com/six-ansible-practices
 - name: Ensure github.com is a known host
   lineinfile:
@@ -10,19 +26,25 @@
     line: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
     regexp: "^github\\.com"
 
-- name: Install pyenv
+- name: Install pyenv for selected users
   git:
-    repo: https://github.com/yyuu/pyenv.git
-    dest: "{{ pyenv_path }}"
-    update: "{{pyenv_update_git_install}}"
-  become_user: "{{pyenv_owner}}"
+    repo: "{{ pyenv_repo }}"
+    dest: "{{ item.pyenv_root }}"
+    accept_hostkey: yes
+    force: yes
+  with_items: "{{ pyenv_users_info }}"
+  become: yes
+  become_user: "{{ item.name }}"
 
-- name: Install PyEnv-virtualenv plugin
+- name: Install pyenv-virtualenv plugin
   git:
-    repo: https://github.com/yyuu/pyenv-virtualenv.git
-    dest: "{{ pyenv_path }}/plugins/pyenv-virtualenv"
-    update: "{{pyenv_update_git_install}}"
-  become_user: "{{pyenv_owner}}"
+    repo: "{{ pyenv_virtualenv_repo }}"
+    dest: "{{ item.pyenv_root }}/plugins/pyenv-virtualenv"
+    accept_hostkey: yes
+    force: yes
+  with_items: "{{ pyenv_users_info }}"
+  become: yes
+  become_user: "{{ item.name }}"
 
 - name: Add pyenv initialization to profile system-wide
   template:
@@ -33,54 +55,53 @@
     mode: 0755
   become: yes
 
-- name: Replace 'x' in the specified python version with the latest one
-  script: get_latest_version.sh {{ item }}
+- name: Replace 'x' of the version with the latest
+  script: get_latest_version.sh {{ pyenv_profile_path }} {{ item }}
   with_items: "{{ pyenv_python_versions }}"
-  register: latest_version
-# - debug: var=latest_version
-
-# Workaround for set_fact doesn't work with loops.
-# https://github.com/ansible/ansible/pull/8019
-- set_fact:
-    # not use stdout because it contains \r\n
-    tmp_items: "{{ item.stdout_lines[0] }}"
-  with_items: "{{ latest_version.results }}"
-  register: sf_result
-- set_fact:
-    pyenv_python_versions_mod: "{{ sf_result.results | map(attribute='ansible_facts.tmp_items') | list }}"
+  register: latest_versions
+# - debug: var=latest_versions
+- name: Set pyenv_python_versions_mod
+  set_fact:
+    pyenv_python_versions_mod: "{{ pyenv_python_versions_mod|default([]) + [ item.stdout_lines[0] ] }}"
+  with_items: "{{ latest_versions.results }}"
 # - debug: var=pyenv_python_versions_mod
 
-- name: Install Python interpreters
-  shell: |
-    . /etc/profile.d/pyenv.sh && pyenv install {{ item }}
+- name: Install Python interpreters {{ pyenv_python_versions_mod }} for select users
+  shell: source {{ pyenv_profile_path }} && pyenv install {{ item[1] }}
   args:
-    creates: "{{ pyenv_path }}/versions/{{ item }}/bin/python"
-  with_items: "{{pyenv_python_versions_mod | default(omit)}}"
-  become_user: "{{ pyenv_owner }}"
+    creates: "{{ item[0].pyenv_root }}/versions/{{ item[1] }}/bin/python"
+  with_nested:
+    - "{{ pyenv_users_info }}"
+    - "{{ pyenv_python_versions_mod }}"
+  become: yes
+  become_user: "{{ item[0].name }}"
   when: pyenv_python_versions is defined
 
-- name: Replace 'x' in the specified python version with the latest one
-  script: get_latest_version.sh {{ item.py_version }}
+- name: Replace 'x' of the version with the latest
+  script: get_latest_version.sh {{ pyenv_profile_path }} {{ item.py_version }}
   with_items: "{{ pyenv_virtualenvs }}"
-  register: latest_version_4_venv
-- debug: var=latest_version_4_venv
+  register: latest_versions_4venv
+# - debug: var=latest_versions_4venv
+- name: Set pyenv_python_versions_mod
+  set_fact:
+    pyenv_python_versions_mod: "{{ latest_versions_4venv|default([]) + [ item.stdout_lines[0] ] }}"
+  with_items: "{{ latest_versions_4venv.results }}"
+# - debug: var=pyenv_python_versions_mod
 
-- set_fact:
-    tmp_items:
-      - py_version: "{{ item.0.stdout_lines[0] }}"
-        venv_name: "{{ item.1.venv_name }}"
+- name: Set pyenv_virtualenvs_info
+  set_fact:
+    pyenv_virtualenvs_info: "{{ pyenv_virtualenvs_info|default([]) + [ { 'py_version': item[0], 'venv_name': item[1].venv_name } ] }}"
   with_together:
-    - "{{ latest_version_4_venv.results }}"
+    - "{{ pyenv_python_versions_mod }}"
     - "{{ pyenv_virtualenvs }}"
-  register: sf_result
-- set_fact:
-    pyenv_virtualenvs_mod: "{{ sf_result.results | map(attribute='ansible_facts.tmp_items') | list }}"
-- debug: var=pyenv_virtualenvs_mod
+- debug: var=pyenv_virtualenvs_info
 
 - name: Create virtual environments
-  shell: . {{ pyenv_profile_path }} && pyenv virtualenv {{ item.py_version }} {{ item.venv_name }}
-         creates="{{ pyenv_path }}/versions/{{ item.venv_name }}/bin/python"
-  with_items: "{{pyenv_virtualenvs_mod | default(omit)}}"
-  become_user: "{{pyenv_owner}}"
+  shell: source {{ pyenv_profile_path }} && pyenv virtualenv {{ item[1].py_version }} {{ item[1].venv_name }}
+         creates="{{ item[0].pyenv_root }}/versions/{{ itemp[1].venv_name }}/bin/python"
+  with_nested:
+    - "{{ pyenv_users_info }}"
+    - "{{ pyenv_virtualenvs_info }}"
+  become_user: "{{ item[0].name }}"
   when: pyenv_virtualenvs is defined
 

@@ -1,12 +1,16 @@
 ---
-- hosts: localhost
-  become: yes
+- hosts: spacedogs
+  gather_facts: yes
   vars:
     pyenv_python_versions:
-      - '2.7.x'
-      - '3.5.x'
-    pyenv_virtualenvs: []
-    pyenv_owner:
+      - 2.7.12
+      - 3.5.x
+    pyenv_virtualenvs:
+      - venv_name: v2.7-12
+        py_version: 2.7.12
+      - venv_name: v3.5-latest
+        py_version: 3.5.x
+    pyenv_users:
       - tomohiko
       - test01
   roles:
