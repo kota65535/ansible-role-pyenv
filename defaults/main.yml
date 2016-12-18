@@ -1,7 +1,9 @@
 ---
 # defaults file for pyenv
 pyenv_users: ["{{ ansible_env.USER }}"]
+pyenv_python_versions: ["3.x.x"]
+pyenv_root: "~/.pyenv"
 pyenv_profile_path: "/etc/profile.d/pyenv.sh"
+
 pyenv_repo: "https://github.com/yyuu/pyenv.git"
 pyenv_virtualenv_repo: "https://github.com/yyuu/pyenv-virtualenv.git"
-pyenv_root: "~/.pyenv"
