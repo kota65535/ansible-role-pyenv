@@ -7,13 +7,14 @@
   with_items: "{{ pyenv_users }}"
   become: yes
 
+# Fails if couldn't get home directories
 - name: Get each user's home directory
   shell: "getent passwd {{ item }} | awk -F: '{ print $6 }'"
   with_items: "{{ pyenv_users }}"
   register: remote_user_homes
   failed_when: remote_user_homes.stdout == ""
   become: yes
-- name: Set pyenv_users_info
+- name: Set pyenv_users_info from the command result
   set_fact:
     pyenv_users_info: "{{ pyenv_users_info|default([]) + [ {'name': item.item, 'pyenv_root': item.stdout + '/.pyenv' } ] }}"
   with_items: "{{ remote_user_homes.results }}"
@@ -57,12 +58,14 @@
     mode: 0755
   become: yes
 
-- name: Replace 'x' of the version with the latest
+# Become the one of the pyenv_users to use pyenv command
+- name: Get the latest version for 'x' in version string
   script: get_latest_version.sh {{ pyenv_profile_path }} {{ item }}
   with_items: "{{ pyenv_python_versions }}"
+  become: "{{ pyenv_users[0] }}"
   register: latest_versions
 # - debug: var=latest_versions
-- name: Set pyenv_python_versions_mod
+- name: Set pyenv_python_versions_mod to replace version strings
   set_fact:
     pyenv_python_versions_mod: "{{ pyenv_python_versions_mod|default([]) + [ item.stdout_lines[0] ] }}"
   with_items: "{{ latest_versions.results }}"
@@ -79,31 +82,27 @@
   become_user: "{{ item[0].name }}"
   when: pyenv_python_versions is defined
 
-- name: Replace 'x' of the version with the latest
+# Become the one of the pyenv_users to use pyenv command
+- name: Get the latest version for 'x' in version string
   script: get_latest_version.sh {{ pyenv_profile_path }} {{ item.py_version }}
   with_items: "{{ pyenv_virtualenvs }}"
+  become: "{{ pyenv_users[0] }}"
   register: latest_versions
-- debug: var=latest_versions
-- name: Set pyenv_python_versions_mod_4venv
+# - debug: var=latest_versions
+- name: Set pyenv_virtualenvs_mod to replace version strings
   set_fact:
-    pyenv_python_versions_mod_4venv: "{{ pyenv_python_versions_mod_4venv|default([]) + [ item.stdout_lines[0] ] }}"
-  with_items: "{{ latest_versions.results }}"
-- debug: var=pyenv_python_versions_mod_4venv
-
-- name: Set pyenv_virtualenvs_info
-  set_fact:
-    pyenv_virtualenvs_info: "{{ pyenv_virtualenvs_info|default([]) + [ { 'py_version': item[0], 'venv_name': item[1].venv_name } ] }}"
+    pyenv_virtualenvs_mod: "{{ pyenv_virtualenvs_mod|default([]) +  [ { 'py_version': item[0].stdout_lines[0], 'venv_name': item[1].venv_name } ] }}"
   with_together:
-    - "{{ pyenv_python_versions_mod_4venv }}"
-    - "{{ pyenv_virtualenvs }}"
-- debug: var=pyenv_virtualenvs_info
+    - "{{ latest_versions.results }}"
+    - "{{ pyenv_virtualenvs_mod }}"
+- debug: var=pyenv_virtualenvs_mod
 
 - name: Create virtual environments
   shell: ${SHELL} -lc "printenv && pyenv virtualenv {{ item[1].py_version }} {{ item[1].venv_name }}"
          creates="{{ item[0].pyenv_root }}/versions/{{ item[1].venv_name }}/bin/python"
   with_nested:
     - "{{ pyenv_users_info }}"
-    - "{{ pyenv_virtualenvs_info }}"
+    - "{{ pyenv_virtualenvs_mod }}"
   become: yes
   become_user: "{{ item[0].name }}"
   when: pyenv_virtualenvs is defined
