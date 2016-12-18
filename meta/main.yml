@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: Tomohiko Ozawa
-  description: Ansible Galaxy role for pyenv (https://github.com/kota65535/pyenv).
+  description: Ansible role for pyenv (https://github.com/kota65535/pyenv).
   company:
   # Some suggested licenses:
   # - BSD (default)
@@ -19,11 +19,11 @@ galaxy_info:
   #
   platforms:
     - name: EL
-  #  versions:
+      versions:
   #  - all
   #  - 5
-      - 6
-      - 7
+        - 6
+        - 7
   #- name: GenericUNIX
   #  versions:
   #  - all
