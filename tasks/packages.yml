@@ -5,6 +5,7 @@
       state: present
   with_items:
       - gcc
+      - make
       - patch
       - sqlite-devel
       - readline-devel
@@ -20,6 +21,7 @@
       state: present
   with_items:
       - gcc
+      - make
       - patch
       - sqlite-devel
       - readline-devel
@@ -34,6 +36,7 @@
   with_items:
     - openssl
     - gcc
+    - make
     - patch
     - sqlite
     - readline
@@ -46,6 +49,7 @@
   package: name={{item}} state=present update_cache=yes
   with_items:
     - gcc
+    - make
     - patch
     - libsqlite3-dev
     - libreadline-dev

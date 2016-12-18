@@ -8,17 +8,17 @@
   become: yes
 
 # Fails if couldn't get home directories
-- name: Get each user's home directory
-  shell: "getent passwd {{ item }} | awk -F: '{ print $6 }'"
-  with_items: "{{ pyenv_users }}"
-  register: remote_user_homes
-  failed_when: remote_user_homes.stdout == ""
-  become: yes
-- name: Set pyenv_users_info from the command result
-  set_fact:
-    pyenv_users_info: "{{ pyenv_users_info|default([]) + [ {'name': item.item, 'pyenv_root': item.stdout + '/.pyenv' } ] }}"
-  with_items: "{{ remote_user_homes.results }}"
-- debug: var=pyenv_users_info
+# - name: Get each user's home directory
+#   shell: "getent passwd {{ item }} | awk -F: '{ print $6 }'"
+#   with_items: "{{ pyenv_users }}"
+#   register: remote_user_homes
+#   failed_when: remote_user_homes.stdout == ""
+#   become: yes
+# - name: Set pyenv_users_info from the command result
+#   set_fact:
+#     pyenv_users_info: "{{ pyenv_users_info|default([]) + [ {'name': item.item, 'pyenv_root': item.stdout + '/.pyenv' } ] }}"
+#   with_items: "{{ remote_user_homes.results }}"
+# - debug: var=pyenv_users_info
 
 # http://hakunin.com/six-ansible-practices
 - name: Ensure github.com is a known host
@@ -32,22 +32,22 @@
 - name: Install pyenv for selected users
   git:
     repo: "{{ pyenv_repo }}"
-    dest: "{{ item.pyenv_root }}"
+    dest: "{{ pyenv_root }}"
     accept_hostkey: yes
     force: yes
-  with_items: "{{ pyenv_users_info }}"
+  with_items: "{{ pyenv_users }}"
   become: yes
-  become_user: "{{ item.name }}"
+  become_user: "{{ item }}"
 
-- name: Install pyenv-virtualenv plugin
+- name: Install pyenv-virtualenv plugin for selected users
   git:
     repo: "{{ pyenv_virtualenv_repo }}"
-    dest: "{{ item.pyenv_root }}/plugins/pyenv-virtualenv"
+    dest: "{{ pyenv_root }}/plugins/pyenv-virtualenv"
     accept_hostkey: yes
     force: yes
-  with_items: "{{ pyenv_users_info }}"
+  with_items: "{{ pyenv_users }}"
   become: yes
-  become_user: "{{ item.name }}"
+  become_user: "{{ item }}"
 
 - name: Add pyenv initialization to profile system-wide
   template:
@@ -76,12 +76,12 @@
 - name: Install Python interpreters {{ pyenv_python_versions_mod }} for select users
   shell: ${SHELL} -lc "pyenv install {{ item[1] }}"
   args:
-    creates: "{{ item[0].pyenv_root }}/versions/{{ item[1] }}/bin/python"
+    creates: "{{ pyenv_root }}/versions/{{ item[1] }}/bin/python"
   with_nested:
-    - "{{ pyenv_users_info }}"
+    - "{{ pyenv_users }}"
     - "{{ pyenv_python_versions_mod }}"
   become: yes
-  become_user: "{{ item[0].name }}"
+  become_user: "{{ item[0] }}"
   when: pyenv_python_versions is defined
 
 # Become the one of the pyenv_users to use pyenv command
@@ -102,11 +102,11 @@
 
 - name: Create virtual environments
   shell: ${SHELL} -lc "printenv && pyenv virtualenv {{ item[1].py_version }} {{ item[1].venv_name }}"
-         creates="{{ item[0].pyenv_root }}/versions/{{ item[1].venv_name }}/bin/python"
+         creates="{{ pyenv_root }}/versions/{{ item[1].venv_name }}/bin/python"
   with_nested:
-    - "{{ pyenv_users_info }}"
+    - "{{ pyenv_users }}"
     - "{{ pyenv_virtualenvs_mod }}"
   become: yes
-  become_user: "{{ item[0].name }}"
+  become_user: "{{ item[0] }}"
   when: pyenv_virtualenvs is defined
 
