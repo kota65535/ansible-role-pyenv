@@ -98,7 +98,7 @@
 
 - name: Create virtual environments
   shell: source {{ pyenv_profile_path }} && pyenv virtualenv {{ item[1].py_version }} {{ item[1].venv_name }}
-         creates="{{ item[0].pyenv_root }}/versions/{{ itemp[1].venv_name }}/bin/python"
+         creates="{{ item[0].pyenv_root }}/versions/{{ item[1].venv_name }}/bin/python"
   with_nested:
     - "{{ pyenv_users_info }}"
     - "{{ pyenv_virtualenvs_info }}"
