@@ -67,7 +67,7 @@
 # - debug: var=pyenv_python_versions_mod
 
 - name: Install Python interpreters {{ pyenv_python_versions_mod }} for select users
-  shell: source {{ pyenv_profile_path }} && pyenv install {{ item[1] }}
+  shell: ${SHELL} -lc "pyenv install {{ item[1] }}"
   args:
     creates: "{{ item[0].pyenv_root }}/versions/{{ item[1] }}/bin/python"
   with_nested:
@@ -97,11 +97,12 @@
 - debug: var=pyenv_virtualenvs_info
 
 - name: Create virtual environments
-  shell: source {{ pyenv_profile_path }} && pyenv virtualenv {{ item[1].py_version }} {{ item[1].venv_name }}
+  shell: ${SHELL} -lc "printenv && pyenv virtualenv {{ item[1].py_version }} {{ item[1].venv_name }}"
          creates="{{ item[0].pyenv_root }}/versions/{{ item[1].venv_name }}/bin/python"
   with_nested:
     - "{{ pyenv_users_info }}"
     - "{{ pyenv_virtualenvs_info }}"
+  become: yes
   become_user: "{{ item[0].name }}"
   when: pyenv_virtualenvs is defined
 
