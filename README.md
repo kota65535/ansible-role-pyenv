@@ -1,6 +1,8 @@
 kota65535.pyenv
 ============
 
+[![Build Status](https://travis-ci.org/kota65535/ansible-role-pyenv.svg?branch=master)](https://travis-ci.org/kota65535/ansible-role-pyenv)
+
 Ansible role for installing [pyenv](https://github.com/yyuu/pyenv) and [pyenv-virtualenv](https://github.com/yyuu/pyenv-virtualenv) on RHEL.
 
 Install it with the following command:
@@ -8,11 +10,6 @@ Install it with the following command:
 ```bash
 $ ansible-galaxy install kota65535.pyenv
 ```
-
-Role ready status
-------------
-
-[![Build Status](https://travis-ci.org/kota65535/ansible-role-pyenv.svg?branch=master)](https://travis-ci.org/kota65535/ansible-role-pyenv)
 
 Dependencies
 ------------
