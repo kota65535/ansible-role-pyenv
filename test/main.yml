@@ -15,7 +15,7 @@
       - venv_name: the-latest
         py_version: 3.5.x
     pyenv_users:
-      - tomohiko
       - test01
+      - test02
   roles:
     - kota65535.pyenv
