@@ -80,12 +80,12 @@
 - name: Replace 'x' of the version with the latest
   script: get_latest_version.sh {{ pyenv_profile_path }} {{ item.py_version }}
   with_items: "{{ pyenv_virtualenvs }}"
-  register: latest_versions_4venv
-# - debug: var=latest_versions_4venv
+  register: latest_versions
+- debug: var=latest_versions
 - name: Set pyenv_python_versions_mod
   set_fact:
-    pyenv_python_versions_mod: "{{ latest_versions_4venv|default([]) + [ item.stdout_lines[0] ] }}"
-  with_items: "{{ latest_versions_4venv.results }}"
+    pyenv_python_versions_mod: "{{ pyenv_python_versions_mod|default([]) + [ item.stdout_lines[0] ] }}"
+  with_items: "{{ latest_versions.results }}"
 # - debug: var=pyenv_python_versions_mod
 
 - name: Set pyenv_virtualenvs_info
