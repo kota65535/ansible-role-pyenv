@@ -58,11 +58,13 @@
     mode: 0755
   become: yes
 
+
 # Become the one of the pyenv_users to use pyenv command
 - name: Get the latest version for 'x' in version string
   script: get_latest_version.sh {{ pyenv_profile_path }} {{ item }}
   with_items: "{{ pyenv_python_versions }}"
-  become: "{{ pyenv_users[0] }}"
+  become: yes
+  become_user: "{{ pyenv_users[0] }}"
   register: latest_versions
 # - debug: var=latest_versions
 - name: Set pyenv_python_versions_mod to replace version strings
@@ -86,7 +88,8 @@
 - name: Get the latest version for 'x' in version string
   script: get_latest_version.sh {{ pyenv_profile_path }} {{ item.py_version }}
   with_items: "{{ pyenv_virtualenvs }}"
-  become: "{{ pyenv_users[0] }}"
+  become: yes
+  become_user: "{{ pyenv_users[0] }}"
   register: latest_versions
 # - debug: var=latest_versions
 - name: Set pyenv_virtualenvs_mod to replace version strings
@@ -94,7 +97,7 @@
     pyenv_virtualenvs_mod: "{{ pyenv_virtualenvs_mod|default([]) +  [ { 'py_version': item[0].stdout_lines[0], 'venv_name': item[1].venv_name } ] }}"
   with_together:
     - "{{ latest_versions.results }}"
-    - "{{ pyenv_virtualenvs_mod }}"
+    - "{{ pyenv_virtualenvs }}"
 - debug: var=pyenv_virtualenvs_mod
 
 - name: Create virtual environments
