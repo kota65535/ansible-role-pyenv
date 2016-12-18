@@ -19,24 +19,24 @@ none
 Role Variables
 --------------
 
-Role variables you may want to change:
-
 * `pyenv_users` - Array of usernames for multiuser install. User must be present in the system.
-* `pyenv_python_versions` - Python versions to be installed. You can use 'x' to represent the latest version number.
+* `pyenv_python_versions` - Python versions to be installed
 * `pyenv_virtualenvs` - Dict of virtualenvs created for each users. Following keys should be set.
-    * venv_name: the name of the virtualenv
-    * py_version: python version used by the virtualenv
+    * `venv_name`: the name of the virtualenv
+    * `py_version`: python version used by the virtualenv
 * `pyenv_root` - Install path of pyenv
 * `pyenv_profile_path` - Install path of pyenv initialization script
 
-The default values:
+You can use `x` to specify python version, which means the latest version number (ex. `3.5.x`)
+
+The default values is as follows:
 
 ```
 pyenv_users: ["{{ ansible_env.USER }}"]
-pyenv_profile_path: "/etc/profile.d/pyenv.sh"
-pyenv_repo: "https://github.com/yyuu/pyenv.git"
-pyenv_virtualenv_repo: "https://github.com/yyuu/pyenv-virtualenv.git"
+pyenv_python_versions: ["3.x.x"]
+pyenv_virtualenvs: []
 pyenv_root: "~/.pyenv"
+pyenv_profile_path: "/etc/profile.d/pyenv.sh"
 ```
 
 Example Playbook
