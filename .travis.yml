@@ -20,10 +20,8 @@ script:
   # Run container in detached state.
   - 'docker run --detach --volume="${PWD}":/etc/ansible/roles/kota65535.pyenv:ro ${run_opts} geerlingguy/docker-${distro}-ansible:latest "${init}" > "${container_id}"'
 
-   # Install dependencies.
-  - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-galaxy install geerlingguy.git'
-  - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-galaxy install fubarhouse.curl'
-  - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-galaxy install fubarhouse.commons'
+  # Install dependencies.
+  # - 'sudo docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-galaxy install geerlingguy.git'
 
   # Ansible syntax check.
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/kota65535.pyenv/test/main.yml --syntax-check -vvvv'

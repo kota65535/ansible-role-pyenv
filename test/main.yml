@@ -1,14 +1,17 @@
 ---
-- hosts: spacedogs
-  gather_facts: yes
+# Run the following command in the repository root.
+#
+#   ansible-playbook test/main.yml -i test/inventory
+#
+- hosts: all
   vars:
     pyenv_python_versions:
       - 2.7.12
       - 3.5.x
     pyenv_virtualenvs:
-      - venv_name: v2.7-12
+      - venv_name: the-conventional
         py_version: 2.7.12
-      - venv_name: v3.5-latest
+      - venv_name: the-latest
         py_version: 3.5.x
     pyenv_users:
       - tomohiko
