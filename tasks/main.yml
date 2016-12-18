@@ -82,17 +82,17 @@
   with_items: "{{ pyenv_virtualenvs }}"
   register: latest_versions
 - debug: var=latest_versions
-- name: Set pyenv_python_versions_mod
+- name: Set pyenv_python_versions_mod_4venv
   set_fact:
-    pyenv_python_versions_mod: "{{ pyenv_python_versions_mod|default([]) + [ item.stdout_lines[0] ] }}"
+    pyenv_python_versions_mod_4venv: "{{ pyenv_python_versions_mod_4venv|default([]) + [ item.stdout_lines[0] ] }}"
   with_items: "{{ latest_versions.results }}"
-# - debug: var=pyenv_python_versions_mod
+- debug: var=pyenv_python_versions_mod_4venv
 
 - name: Set pyenv_virtualenvs_info
   set_fact:
     pyenv_virtualenvs_info: "{{ pyenv_virtualenvs_info|default([]) + [ { 'py_version': item[0], 'venv_name': item[1].venv_name } ] }}"
   with_together:
-    - "{{ pyenv_python_versions_mod }}"
+    - "{{ pyenv_python_versions_mod_4venv }}"
     - "{{ pyenv_virtualenvs }}"
 - debug: var=pyenv_virtualenvs_info
 
