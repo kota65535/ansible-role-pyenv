@@ -61,10 +61,9 @@
 
 # Become the one of the pyenv_users to use pyenv command
 - name: Get the latest version for 'x' in version string
-  script: get_latest_version.sh {{ pyenv_profile_path }} {{ item }}
+  script: get_latest_version.sh {{ pyenv_repo }} {{ item }}
   with_items: "{{ pyenv_python_versions }}"
   become: yes
-  become_user: "{{ pyenv_users[0] }}"
   register: latest_versions
 # - debug: var=latest_versions
 - name: Set pyenv_python_versions_mod to replace version strings
@@ -86,10 +85,9 @@
 
 # Become the one of the pyenv_users to use pyenv command
 - name: Get the latest version for 'x' in version string
-  script: get_latest_version.sh {{ pyenv_profile_path }} {{ item.py_version }}
+  script: get_latest_version.sh {{ pyenv_repo }} {{ item.py_version }}
   with_items: "{{ pyenv_virtualenvs }}"
   become: yes
-  become_user: "{{ pyenv_users[0] }}"
   register: latest_versions
 # - debug: var=latest_versions
 - name: Set pyenv_virtualenvs_mod to replace version strings
@@ -105,8 +103,7 @@
          creates="{{ pyenv_root }}/versions/{{ item[1].venv_name }}/bin/python"
   with_nested:
     - "{{ pyenv_users }}"
-    - "{{ pyenv_virtualenvs_mod }}"
+    - "{{ pyenv_virtualenvs_mod|default([]) }}"
   become: yes
   become_user: "{{ item[0] }}"
-  when: pyenv_virtualenvs is defined
 
