@@ -1,6 +1,6 @@
 galaxy_info:
   author: Tomohiko Ozawa
-  description: Ansible role for pyenv (https://github.com/kota65535/pyenv).
+  description: Ansible Galaxy role for pyenv and pyenv-virtualenv.
   company:
 
   # If the issue tracker for your role is not on github, uncomment the
