@@ -3,7 +3,7 @@ kota65535.pyenv
 
 [![Build Status](https://travis-ci.org/kota65535/ansible-role-pyenv.svg?branch=master)](https://travis-ci.org/kota65535/ansible-role-pyenv)
 
-Ansible role for installing [pyenv](https://github.com/yyuu/pyenv) and [pyenv-virtualenv](https://github.com/yyuu/pyenv-virtualenv) on RHEL.
+Ansible role for installing [pyenv](https://github.com/yyuu/pyenv) and [pyenv-virtualenv](https://github.com/yyuu/pyenv-virtualenv) on RHEL and Ubuntu.
 
 Install it with the following command:
 
@@ -29,7 +29,7 @@ Role Variables
 
 You can use `x` to specify python version, which means the latest version number (ex. `3.5.x`)
 
-The default values is as follows:
+The default values are as follows:
 
 ```
 pyenv_users: ["{{ ansible_env.USER }}"]
