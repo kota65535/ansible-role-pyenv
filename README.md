@@ -27,7 +27,7 @@ Role Variables
 * `pyenv_root` - Install path of pyenv
 * `pyenv_profile_path` - Install path of pyenv initialization script
 
-You can use `x` to specify python version, which means the latest version number (ex. `3.5.x`)
+You can use `x` as the latest version number to specify python version (ex. `3.5.x`).
 
 The default values are as follows:
 
