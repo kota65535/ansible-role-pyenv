@@ -1,5 +1,5 @@
 #!/bin/sh
-tmpdir=$(mktemp -d)
+tmpdir=$(mktemp -d /tmp/XXXX)
 git clone -q $1 ${tmpdir}
 export PYENV_ROOT=${tmpdir}
 export PATH="$PYENV_ROOT/bin:$PATH"
