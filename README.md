@@ -65,7 +65,7 @@ Example Playbooks
 ```
 
 ### 2. Multiple users, global profile
-- Install pyenv for multiple users
+- Install pyenv for users `test01` and `test02`
 - Install python 2.7.12
 - Crerate `/etc/profile.d/pyenv.sh` to initialize pyenv for all users
 
@@ -74,6 +74,9 @@ Example Playbooks
   vars:
     pyenv_python_versions:
       - 2.7.12
+    pyenv_users:
+      - test01
+      - test02
     pyenv_profile_path: /etc/profile.d/pyenv.sh
     pyenv_profile_owner: root
   roles:
@@ -81,7 +84,7 @@ Example Playbooks
 ```
 
 ### 3. Multiple users, personal profiles
-- Install pyenv for multiple users
+- Install pyenv for users `test01` and `test02`
 - Install python 2.7.12
 - Add lines to `~/.bashrc` of each users to initialize pyenv
 
@@ -90,10 +93,10 @@ Example Playbooks
   vars:
     pyenv_python_versions:
       - 2.7.12
-    pyenv_profile_path: ~/.bashrc
     pyenv_users:
       - test01
       - test02
+    pyenv_profile_path: ~/.bashrc
   roles:
     - kota65535.pyenv
 ```
