@@ -3,6 +3,7 @@
   shell: "id {{ item }}"
   with_items: "{{ pyenv_users }}"
   become: yes
+  changed_when: no
 
 # http://hakunin.com/six-ansible-practices
 - name: Ensure github.com is a known host
