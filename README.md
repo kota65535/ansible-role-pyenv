@@ -14,7 +14,7 @@ $ ansible-galaxy install kota65535.pyenv
 Dependencies
 ------------
 
-none
+- ansible >= 2.2.1
 
 Role Variables
 --------------
