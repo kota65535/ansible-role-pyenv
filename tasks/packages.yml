@@ -13,6 +13,7 @@
       - bzip2-devel
       - gdbm-devel
       - git
+      - bzip2
       - perl-Sort-Versions
   become: yes
   when: ansible_distribution in ('CentOS', 'RedHat')
@@ -30,6 +31,7 @@
       - bzip2-devel
       - gdbm-devel
       - git
+      - bzip2
       - perl-Sort-Versions
   become: yes
   when: "'Fedora' in ansible_distribution"
@@ -60,6 +62,7 @@
     - libssl-dev
     - libgdbm-dev
     - git
+    - bzip2
     - libsort-versions-perl
   when: "'Debian' in ansible_os_family"
   become: yes
