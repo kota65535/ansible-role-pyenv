@@ -13,6 +13,7 @@
       - bzip2-devel
       - gdbm-devel
       - git
+      - perl-Sort-Version
   become: yes
   when: ansible_distribution in ('CentOS', 'RedHat')
 - name: Install development packages to compile Python versions (Fedora)
@@ -29,6 +30,7 @@
       - bzip2-devel
       - gdbm-devel
       - git
+      - perl-Sort-Version
   become: yes
   when: "'Fedora' in ansible_distribution"
 - name: Install development packages to compile Python versions (Arch)
@@ -43,6 +45,7 @@
     - bzip2
     - gdbm
     - git
+    - perl-sort-versions
   when: "'Archlinux' in ansible_distribution"
   become: yes
 - name: Install development packages to compile Python versions (Debian)
@@ -57,5 +60,6 @@
     - libssl-dev
     - libgdbm-dev
     - git
+    - libsort-versions-perl
   when: "'Debian' in ansible_os_family"
   become: yes
