@@ -1,0 +1,84 @@
+---
+- name: Install packages
+  include: packages.yml
+
+http://hakunin.com/six-ansible-practices
+- name: Ensure github.com is a known host
+  lineinfile:
+    dest: "~/.ssh/known_hosts"
+    create: yes
+    state: present
+    line: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
+    regexp: "^github\\.com"
+
+- name: Install pyenv for me
+  git:
+    repo: "{{ pyenv_repo }}"
+    dest: "{{ pyenv_root }}"
+    accept_hostkey: yes
+    force: yes
+
+- name: Install pyenv-virtualenv plugin for me
+  git:
+    repo: "{{ pyenv_virtualenv_repo }}"
+    dest: "{{ pyenv_root }}/plugins/pyenv-virtualenv"
+    accept_hostkey: yes
+    force: yes
+
+- name: Add pyenv initialization lines to {{ pyenv_profile_path }}
+  blockinfile:
+    src: pyenv.sh.j2
+    dest: "{{ pyenv_profile_path }}"
+    owner: "{{ pyenv_profile_owner }}"
+    # group: root
+    mode: 0644
+    create: yes
+  become: yes
+  become_user: "{{ pyenv_profile_owner }}"
+  when: pyenv_profile_owner is defined
+
+- name: Add pyenv initialization lines to {{ pyenv_profile_path }}
+  blockinfile:
+    src: pyenv.sh.j2
+    dest: "{{ pyenv_profile_path }}"
+    owner: "{{ ansible_env.USER }}"
+    # group: root
+    mode: 0644
+    create: yes
+  when: pyenv_profile_owner is not defined
+
+
+- name: Get the latest version for 'x' in version string
+  script: get_latest_version.sh {{ pyenv_repo }} {{ item }}
+  with_items: "{{ pyenv_python_versions }}"
+  register: latest_versions
+  changed_when: no
+- debug: var=latest_versions
+# Set pyenv_python_versions_mod to replace version strings
+- set_fact:
+    pyenv_python_versions_mod: "{{ pyenv_python_versions_mod|default([]) + [ item.stdout.strip() ] }}"
+  with_items: "{{ latest_versions.results }}"
+# - debug: var=pyenv_python_versions_mod
+
+- name: Install Python interpreters {{ pyenv_python_versions_mod }}
+  shell: ${SHELL} -lc "pyenv install {{ item }}"
+  args:
+    creates: "{{ pyenv_root }}/versions/{{ item }}/bin/python"
+  with_items:
+    - "{{ pyenv_python_versions_mod }}"
+  when: pyenv_python_versions is defined
+
+# Set pyenv_virtualenvs_mod to replace version strings
+- set_fact:
+    pyenv_virtualenvs_mod: "{{ pyenv_virtualenvs_mod|default([]) +  [ { 'py_version': item[0].stdout.strip(), 'venv_name': item[1].venv_name } ] }}"
+  with_together:
+    - "{{ latest_versions.results }}"
+    - "{{ pyenv_virtualenvs }}"
+- debug: var=pyenv_virtualenvs_mod
+
+- name: Create virtual environments
+  shell: ${SHELL} -lc "printenv && pyenv virtualenv {{ item.py_version }} {{ item.venv_name }}"
+         creates="{{ pyenv_root }}/versions/{{ item.venv_name }}/bin/python"
+  with_items:
+    - "{{ pyenv_virtualenvs_mod|default([]) }}"
+
