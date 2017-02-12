@@ -191,6 +191,7 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
+            del new_module_args['create']
             result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
 
         self._remove_tmp_path(tmp)
