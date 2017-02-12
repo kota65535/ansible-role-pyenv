@@ -14,6 +14,7 @@
         py_version: 2.7.12
       - venv_name: the-latest
         py_version: 3.5.x
+    pyenv_profile_path: ~/.bashrc
     pyenv_users:
       - test01
       - test02
