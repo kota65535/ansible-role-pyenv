@@ -44,11 +44,12 @@
     create: yes
   when: pyenv_profile_owner is not defined
 
-
+# Executed in localhost
 - name: Get the latest version for 'x' in version string
   script: get_latest_version.sh {{ pyenv_repo }} {{ item }}
   with_items: "{{ pyenv_python_versions }}"
   register: latest_versions
+  delegate_to: 127.0.0.1
   changed_when: no
 - debug: var=latest_versions
 # Set pyenv_python_versions_mod to replace version strings
