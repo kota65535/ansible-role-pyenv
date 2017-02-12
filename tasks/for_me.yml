@@ -2,7 +2,7 @@
 - name: Install packages
   include: packages.yml
 
-http://hakunin.com/six-ansible-practices
+# http://hakunin.com/six-ansible-practices
 - name: Ensure github.com is a known host
   lineinfile:
     dest: "~/.ssh/known_hosts"
@@ -11,14 +11,14 @@ http://hakunin.com/six-ansible-practices
     line: "{{ lookup('pipe', 'ssh-keyscan -t rsa github.com') }}"
     regexp: "^github\\.com"
 
-- name: Install pyenv for me
+- name: Install pyenv
   git:
     repo: "{{ pyenv_repo }}"
     dest: "{{ pyenv_root }}"
     accept_hostkey: yes
     force: yes
 
-- name: Install pyenv-virtualenv plugin for me
+- name: Install pyenv-virtualenv plugin
   git:
     repo: "{{ pyenv_virtualenv_repo }}"
     dest: "{{ pyenv_root }}/plugins/pyenv-virtualenv"
