@@ -1,9 +1,4 @@
 ---
-# Run the following command for test.
-#
-#   cd test
-#   ansible-playbook main.yml -i inventory
-#
 - hosts: all
   vars:
     pyenv_python_versions:
@@ -15,6 +10,34 @@
       - venv_name: the-latest
         py_version: 3.5.X
     pyenv_profile_path: ~/.bashrc
+  roles:
+    - kota65535.pyenv
+
+- hosts: all
+  vars:
+    pyenv_python_versions:
+      - 2.7.12
+      - pypy-5.X.X
+    pyenv_virtualenvs:
+      - venv_name: pypy-latest
+        py_version: pypy-5.X.X
+    pyenv_profile_path: ~/.bashrc
+    pyenv_users:
+      - test01
+      - test02
+  roles:
+    - kota65535.pyenv
+
+- hosts: all
+  vars:
+    pyenv_python_versions:
+      - 2.7.12
+      - anaconda3-4.X.X
+    pyenv_virtualenvs:
+      - venv_name: pypy-latest
+        py_version: pypy-5.X.X
+    pyenv_profile_path: /etc/profile
+    pyenv_profile_owner: root
     pyenv_users:
       - test01
       - test02
