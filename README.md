@@ -91,6 +91,9 @@ Example Playbooks
     pyenv_python_versions:
       - 2.7.12
     pyenv_profile_path: ~/.bashrc
+    pyenv_users:
+      - test01
+      - test02
   roles:
     - kota65535.pyenv
 ```
