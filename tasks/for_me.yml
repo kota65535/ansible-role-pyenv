@@ -38,7 +38,7 @@
   blockinfile:
     src: pyenv.sh.j2
     dest: "{{ pyenv_profile_path }}"
-    owner: "{{ ansible_env.USER }}"
+    owner: "{{ ansible_user_id }}"
     # group: root
     mode: 0644
     create: yes
