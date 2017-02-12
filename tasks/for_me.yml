@@ -76,7 +76,7 @@
 - debug: var=pyenv_virtualenvs_mod
 
 - name: Create virtual environments
-  shell: ${SHELL} -lc "printenv && pyenv virtualenv {{ item.py_version }} {{ item.venv_name }}"
+  shell: ${SHELL} -lc "pyenv virtualenv {{ item.py_version }} {{ item.venv_name }}"
          creates="{{ pyenv_root }}/versions/{{ item.venv_name }}/bin/python"
   with_items:
     - "{{ pyenv_virtualenvs_mod|default([]) }}"
