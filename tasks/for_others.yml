@@ -1,7 +1,4 @@
 ---
-- name: Install packages
-  include: packages.yml
-
 - name: Check if the users exist
   shell: "id {{ item }}"
   with_items: "{{ pyenv_users }}"

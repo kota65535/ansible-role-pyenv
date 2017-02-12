@@ -1,7 +1,4 @@
 ---
-- name: Install packages
-  include: packages.yml
-
 # http://hakunin.com/six-ansible-practices
 - name: Ensure github.com is a known host
   lineinfile:

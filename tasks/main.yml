@@ -1,4 +1,7 @@
 ---
+- name: Install packages
+  include: packages.yml
+
 - include: for_me.yml
   when: pyenv_users is not defined
 - include: for_others.yml
