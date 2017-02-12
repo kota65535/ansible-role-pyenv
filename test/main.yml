@@ -40,6 +40,5 @@
     pyenv_profile_owner: root
     pyenv_users:
       - test01
-      - test02
   roles:
     - kota65535.pyenv
