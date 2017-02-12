@@ -45,32 +45,33 @@
   when: pyenv_profile_owner is not defined
 
 # Executed in localhost
-- name: Get the latest version for 'x' in version string
+- name: Get the latest version for 'X' in version string
   script: get_latest_version.sh {{ pyenv_repo }} {{ item }}
   with_items: "{{ pyenv_python_versions }}"
   register: latest_versions
   delegate_to: 127.0.0.1
   changed_when: no
-- debug: var=latest_versions
-# Set pyenv_python_versions_mod to replace version strings
+# - debug: var=latest_versions
+# - debug: var=pyenv_python_versions
+# Make dict 'pyenv_python_versions_dict' to associate 'X' version with the actual latest version
 - set_fact:
-    pyenv_python_versions_mod: "{{ pyenv_python_versions_mod|default([]) + [ item.stdout.strip() ] }}"
-  with_items: "{{ latest_versions.results }}"
-# - debug: var=pyenv_python_versions_mod
+    pyenv_python_versions_dict: "{{ pyenv_python_versions_dict|default({}) | combine( { item[0]: item[1].stdout } ) }}"
+  with_together:
+    - "{{ pyenv_python_versions }}"
+    - "{{ latest_versions.results }}"
+# - debug: var=pyenv_python_versions_dict
 
-- name: Install Python interpreters {{ pyenv_python_versions_mod }}
-  shell: ${SHELL} -lc "pyenv install {{ item }}"
+- name: Install Python interpreters {{ pyenv_python_versions_dict.values() }}
+  shell: ${SHELL} -lc "pyenv install {{ item.value }}"
   args:
-    creates: "{{ pyenv_root }}/versions/{{ item }}/bin/python"
-  with_items:
-    - "{{ pyenv_python_versions_mod }}"
+    creates: "{{ pyenv_root }}/versions/{{ item.value }}/bin/python"
+  with_dict: "{{ pyenv_python_versions_dict }}"
   when: pyenv_python_versions is defined
 
 # Set pyenv_virtualenvs_mod to replace version strings
 - set_fact:
-    pyenv_virtualenvs_mod: "{{ pyenv_virtualenvs_mod|default([]) +  [ { 'py_version': item[0].stdout.strip(), 'venv_name': item[1].venv_name } ] }}"
-  with_together:
-    - "{{ latest_versions.results }}"
+    pyenv_virtualenvs_mod: "{{ pyenv_virtualenvs_mod|default([]) +  [ { 'py_version': pyenv_python_versions_dict[item.py_version], 'venv_name': item.venv_name } ] }}"
+  with_items:
     - "{{ pyenv_virtualenvs }}"
 - debug: var=pyenv_virtualenvs_mod
 
