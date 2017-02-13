@@ -8,8 +8,7 @@ Ansible role for installing [pyenv](https://github.com/yyuu/pyenv) and [pyenv-vi
 Install it with the following command:
 
 ```bash
-$ ansible-gala
-y install kota65535.pyenv
+$ ansible-galaxy install kota65535.pyenv
 ```
 
 Dependencies
@@ -28,7 +27,7 @@ Role Variables
 * `pyenv_root` - Install path of pyenv
 * `pyenv_profile_path` - Install path of pyenv initialization script
 
-You can use `X` as the latest version number to specify python version (ex. `3.5.x`).
+You can use `X` as the latest version number to specify python version (ex. `3.5.X`).
 
 The default values are as follows:
 
