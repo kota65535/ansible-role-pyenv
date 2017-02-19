@@ -23,6 +23,7 @@ import pwd
 import time
 
 from ansible import constants as C
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.pycompat24 import get_exception
@@ -51,24 +52,24 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
+
         if task_vars is None:
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('src', None)
+        block = self._task.args.get('block', None)
         dest   = self._task.args.get('dest', None)
         force  = boolean(self._task.args.get('force', True))
 
-        if source is None or dest is None:
+        if ( source and block
+                or source is None and block is None ):
             result['failed'] = True
-            result['msg'] = "src and dest are required"
-        else:
-            try:
-                source = self._find_needle('templates', source)
-            except AnsibleError:
-                result['failed'] = True
-                result['msg'] = to_native(get_exception())
+            result['msg'] = "Either src or block is required"
+        elif dest is None:
+            result['failed'] = True
+            result['msg'] = "dest is required"
 
         if 'failed' in result:
             return result
@@ -76,81 +77,100 @@ class ActionModule(ActionBase):
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest)
 
-        directory_prepended = False
-        if dest.endswith(os.sep):
-            directory_prepended = True
-            base = os.path.basename(source)
-            dest = os.path.join(dest, base)
-
-        # template the source data locally & get ready to transfer
-        b_source = to_bytes(source)
-        try:
-            with open(b_source, 'r') as f:
-                template_data = to_text(f.read())
-
+        if block:
+            # delegate to blockinfile module
+            new_module_args = self._task.args.copy()
+            # new_module_args.update(
+            #    dict(
+            #        dest=dest,
+            #        block=block
+            #    ),
+            # )
+            result.update(self._execute_module(module_name='blockinfile', module_args=new_module_args, task_vars=task_vars, tmp=tmp, delete_remote_tmp=False))
+            self._remove_tmp_path(tmp)
+            return result
+        else:
+            # template the source data locally & get ready to transfer
+            directory_prepended = False
+            if dest.endswith(os.sep):
+                directory_prepended = True
+                base = os.path.basename(source)
+                dest = os.path.join(dest, base)
             try:
-                template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
-            except:
-                template_uid = os.stat(b_source).st_uid
-
-            temp_vars = task_vars.copy()
-            temp_vars['template_host']     = os.uname()[1]
-            temp_vars['template_path']     = source
-            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
-            temp_vars['template_uid']      = template_uid
-            temp_vars['template_fullpath'] = os.path.abspath(source)
-            temp_vars['template_run_date'] = datetime.datetime.now()
-
-            managed_default = C.DEFAULT_MANAGED_STR
-            managed_str = managed_default.format(
-                host = temp_vars['template_host'],
-                uid  = temp_vars['template_uid'],
-                file = to_bytes(temp_vars['template_path'])
-            )
-            temp_vars['ansible_managed'] = time.strftime(
-                managed_str,
-                time.localtime(os.path.getmtime(b_source))
-            )
+                source = self._find_needle('templates', source)
+            except AnsibleError:
+                result['failed'] = True
+                result['msg'] = to_native(get_exception())
 
 
-            searchpath = []
-            # set jinja2 internal search path for includes
-            if 'ansible_search_path' in task_vars:
-                searchpath = task_vars['ansible_search_path']
-                # our search paths aren't actually the proper ones for jinja includes.
+            b_source = to_bytes(source)
+            try:
+                with open(b_source, 'r') as f:
+                    template_data = to_text(f.read())
 
-            searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+                try:
+                    template_uid = pwd.getpwuid(os.stat(b_source).st_uid).pw_name
+                except:
+                    template_uid = os.stat(b_source).st_uid
 
-            # We want to search into the 'templates' subdir of each search path in
-            # addition to our original search paths.
-            newsearchpath = []
-            for p in searchpath:
-                newsearchpath.append(os.path.join(p, 'templates'))
-                newsearchpath.append(p)
-            searchpath = newsearchpath
+                temp_vars = task_vars.copy()
+                temp_vars['template_host']     = os.uname()[1]
+                temp_vars['template_path']     = source
+                temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(b_source))
+                temp_vars['template_uid']      = template_uid
+                temp_vars['template_fullpath'] = os.path.abspath(source)
+                temp_vars['template_run_date'] = datetime.datetime.now()
 
-            self._templar.environment.loader.searchpath = searchpath
+                managed_default = C.DEFAULT_MANAGED_STR
+                managed_str = managed_default.format(
+                    host = temp_vars['template_host'],
+                    uid  = temp_vars['template_uid'],
+                    file = to_bytes(temp_vars['template_path'])
+                )
+                temp_vars['ansible_managed'] = time.strftime(
+                    managed_str,
+                    time.localtime(os.path.getmtime(b_source))
+                )
 
-            old_vars = self._templar._available_variables
-            self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
-            self._templar.set_available_variables(old_vars)
-        except Exception as e:
-            result['failed'] = True
-            result['msg'] = type(e).__name__ + ": " + str(e)
-            return result
 
-        remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-        if not tmp:
-            tmp = self._make_tmp_path(remote_user)
-            self._cleanup_remote_tmp = True
+                searchpath = []
+                # set jinja2 internal search path for includes
+                if 'ansible_search_path' in task_vars:
+                    searchpath = task_vars['ansible_search_path']
+                    # our search paths aren't actually the proper ones for jinja includes.
 
-        local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
-        if isinstance(remote_checksum, dict):
-            # Error from remote_checksum is a dict.  Valid return is a str
-            result.update(remote_checksum)
-            return result
+                searchpath.extend([self._loader._basedir, os.path.dirname(source)])
+
+                # We want to search into the 'templates' subdir of each search path in
+                # addition to our original search paths.
+                newsearchpath = []
+                for p in searchpath:
+                    newsearchpath.append(os.path.join(p, 'templates'))
+                    newsearchpath.append(p)
+                searchpath = newsearchpath
+
+                self._templar.environment.loader.searchpath = searchpath
+
+                old_vars = self._templar._available_variables
+                self._templar.set_available_variables(temp_vars)
+                resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                self._templar.set_available_variables(old_vars)
+            except Exception as e:
+                result['failed'] = True
+                result['msg'] = type(e).__name__ + ": " + str(e)
+                return result
+
+            remote_user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+            if not tmp:
+                tmp = self._make_tmp_path(remote_user)
+                self._cleanup_remote_tmp = True
+
+            local_checksum = checksum_s(resultant)
+            remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source, tmp=tmp)
+            if isinstance(remote_checksum, dict):
+                # Error from remote_checksum is a dict.  Valid return is a str
+                result.update(remote_checksum)
+                return result
 
         diff = {}
         new_module_args = self._task.args.copy()
