@@ -76,4 +76,5 @@
   become: yes
 - name: Install development packages to compile Python versions (MacOSX)
   cpanm: name="Sort::Versions"
+  when: "'MacOSX' in ansible_os_family"
   become: yes
