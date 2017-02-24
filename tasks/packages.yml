@@ -34,7 +34,7 @@
       - bzip2
       - perl-Sort-Versions
   become: yes
-  when: "'Fedora' in ansible_distribution"
+  when: ansible_distribution == 'Fedora'
 - name: Install development packages to compile Python versions (Arch)
   package: name={{item}} state=present
   with_items:
@@ -48,7 +48,7 @@
     - gdbm
     - git
     - perl-sort-versions
-  when: "'Archlinux' in ansible_distribution"
+  when: ansible_distribution == 'Archlinux'
   become: yes
 - name: Install development packages to compile Python versions (Debian)
   package: name={{item}} state=present update_cache=yes
@@ -64,17 +64,17 @@
     - git
     - bzip2
     - libsort-versions-perl
-  when: "'Debian' in ansible_os_family"
+  when: ansible_os_family == 'Debian'
   become: yes
 - name: Install development packages to compile Python versions (MacOSX)
-  package: name={{item}} state=present update_cache=yes
+  homebrew: name={{item}} state=present update_homebrew=yes
   with_items:
     - readline
     - xz
     - perl
-  when: "'MacOSX' in ansible_os_family"
-  become: yes
+    - cpanminus
+  when: ansible_distribution == 'MacOSX'
 - name: Install development packages to compile Python versions (MacOSX)
   cpanm: name="Sort::Versions"
-  when: "'MacOSX' in ansible_os_family"
   become: yes
+  when: ansible_distribution == 'MacOSX'
