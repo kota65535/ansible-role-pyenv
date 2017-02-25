@@ -30,6 +30,7 @@
     # group: root
     mode: 0644
     create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK by kota65535.pyenv"
   become: yes
   become_user: "{{ pyenv_profile_owner }}"
   when: pyenv_profile_owner is defined
@@ -42,6 +43,7 @@
     # group: root
     mode: 0644
     create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK by kota65535.pyenv"
   when: pyenv_profile_owner is not defined
 
 # Executed in localhost

@@ -42,6 +42,7 @@
     # group: root
     mode: 0644
     create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK by kota65535.pyenv"
   become: yes
   become_user: "{{ item }}"
   with_items: "{{ pyenv_users }}"
@@ -55,6 +56,7 @@
     # group: root
     mode: 0644
     create: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK by kota65535.pyenv"
   become: yes
   become_user: "{{ pyenv_profile_owner }}"
   with_items: "{{ pyenv_users }}"
