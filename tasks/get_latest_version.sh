@@ -1,7 +1,8 @@
 #!/bin/sh
 
 tmpdir=$(mktemp -d /tmp/XXXX)
-if ! which -s pyenv; then
+which pyenv > /dev/null
+if $? -ne 0; then
     # If pyenv is not installed, clone repository and set path
     git clone -q $1 ${tmpdir}
     export PYENV_ROOT=${tmpdir}
